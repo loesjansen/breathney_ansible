@@ -1,0 +1,12 @@
+[Unit]
+Description=VNC Server for X11
+Requires=display-manager.service
+After=display-manager.service
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/x11vnc -forever -noxrecord -noxdamage -noxfixes -nodpms -display :0 -bg
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

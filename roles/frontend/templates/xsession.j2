@@ -1,0 +1,28 @@
+#!/bin/sh
+
+unclutter &
+xset s off
+xset -dpms
+xset s noblank
+
+while true; do
+        # Clean up previously running apps, gracefully at first then harshly
+        {% for app in appstokill %}
+        killall -TERM {{ app }} 2>/dev/null;
+        {% endfor %}
+        sleep 2;
+        {% for app in appstokill %}
+        killall -9 {{ app }} 2>/dev/null;
+        {% endfor %}
+
+        # Reset the framebuffer's colour-depth
+        fbset -depth $( cat /sys/module/*fb*/parameters/fbdepth );
+
+        # Get screen size
+        RESOLUTION=${$(xdpyinfo | grep -Po "(?<=dimensions:)\s*([0-9]{1,}x[0-9]{1,})")##*( )}
+        SCREEN_WIDTH=$(echo ${RESOLUTION} | cut -d'x' -f1)
+        SCREEN_HEIGHT=$(echo ${RESOLUTION} | cut -d'x' -f2)
+
+        # Start the app
+        {{ appcommand }}
+done;

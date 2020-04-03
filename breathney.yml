@@ -1,0 +1,14 @@
+---
+- hosts: all
+  roles:
+    - { role: setup, tags: ["setup"] }
+
+- hosts: breathney
+  roles:
+    - { role: frontend, tags: ["frontend"] }
+
+
+#- hosts: cams
+#  roles:
+#    - { role: cam, tags: ["cams"] }
+

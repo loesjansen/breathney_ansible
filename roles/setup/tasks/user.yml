@@ -1,0 +1,103 @@
+---
+- name: "Get homedir of {{ username }}"
+  getent:
+    database: passwd
+    key: "{{ username }}"
+
+- name: Get homedir
+  set_fact:
+    homedir: "{{ getent_passwd[username][4] }}"
+
+- name: "Set zshell as the default shell for {{ username }}"
+  become: yes
+  user:
+    name: "{{ username }}"
+    shell: /usr/bin/zsh
+
+- name: "Install zshell configuration for {{ username }}"
+  become: yes
+  copy:
+    dest: "{{ homedir }}/.zshrc"
+    group: "{{ username }}"
+    mode: 0400
+    owner: "{{ username }}"
+    src: .zshrc
+
+- name: "Install vim configuration for {{ username }}"
+  become: yes
+  copy:
+    dest: "{{ homedir }}/.vimrc"
+    group: "{{ username }}"
+    mode: 0400
+    owner: "{{ username }}"
+    src: .vimrc
+
+#- name: "Create .vim directory for {{ username }}"
+#  become: yes
+#  file:
+#    group: "{{ username }}"
+#    mode: 0700
+#    owner: "{{ username }}"
+#    path: "{{ homedir }}/.vim"
+#    state: directory
+#
+#- name: "Install vim configuration files for {{ username }}"
+#  become: yes
+#  become_user: "{{ username }}"
+#  synchronize:
+#    archive: no
+#    delete: yes
+#    dest: "{{ homedir }}/.vim/{{ dir }}/"
+#    recursive: yes
+#    src: ~/.vim/{{ dir }}/
+#  loop:
+#    - ftplugin
+#  loop_control:
+#    loop_var: dir
+#
+#- name: "Fix .vim permissions for {{ username }}"
+#  become: yes
+#  file:
+#    dest: "{{ homedir }}/.vim"
+#    owner: "{{ username }}"
+#    group: "{{ username }}"
+#    recurse: yes
+#
+#- name: "Install Vundle for {{ username }}"
+#  become: yes
+#  become_user: "{{ username }}"
+#  git:
+#    repo: https://github.com/gmarik/Vundle.vim.git
+#    dest: ~/.vim/bundle/Vundle.vim
+#
+#- name: "Configure vim for {{ username }}"
+#  become: yes
+#  copy:
+#    dest: "{{ homedir }}/.vimrc"
+#    group: "{{ username }}"
+#    mode: 0400
+#    owner: "{{ username }}"
+#    src: ~/.vimrc
+#
+#- name: "Install vim plugins for {{ username }}"
+#  become: yes
+#  become_user: "{{ username }}"
+#  shell: vim +PluginInstall +qall
+
+- name: "Create ~/bin directory for {{ username }}"
+  become: yes
+  file:
+    group: "{{ username }}"
+    mode: 0700
+    owner: "{{ username }}"
+    path: "{{ homedir }}/bin"
+    state: directory
+
+- name: "Install psgrep utility for {{ username }}"
+  become: yes
+  copy:
+    content: ps auwx | (read line; echo "$line"; grep -v psgrep | grep --colour=yes "$@")
+    dest: "{{ homedir }}/bin/psgrep"
+    group: "{{ username }}"
+    mode: 0500
+    owner: "{{ username }}"

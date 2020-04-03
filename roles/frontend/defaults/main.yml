@@ -1,0 +1,5 @@
+---
+autostart_user: pi
+autostart_group: pi
+vncserver: no
+appstokill: []

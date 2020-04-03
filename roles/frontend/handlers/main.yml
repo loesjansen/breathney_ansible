@@ -1,0 +1,13 @@
+---
+- name: Reboot the machine
+  become: yes
+  reboot:
+  listen: reboot_frontend
+
+- name: Restart VNC server
+  become: yes
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: x11vnc
+  listen: restart vnc

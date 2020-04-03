@@ -1,0 +1,21 @@
+---
+raspberry_pi: no
+ubuntu: yes
+
+startvolume: 90%
+pipenv_path: /usr/local/bin/pipenv
+daily_reboot: no
+
+netplan: yes
+interface: eno1
+ipaddress: 192.168.0.184
+routers: 192.168.0.1
+dns_servers: 192.168.0.1 8.8.8.8
+
+audio_channel: hdmi #analogue
+hdmi_safe: no
+autostart_user: breathneyfrontend
+autostart_group: breathneyfrontend
+
+frontend: breathney
+frontend_url: localhost:3001

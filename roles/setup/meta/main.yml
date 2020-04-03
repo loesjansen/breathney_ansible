@@ -1,0 +1,8 @@
+galaxy_info:
+  author: Bart Van Loon
+  description: Basic setup of computers in an escape room
+  company: Scapegoat VOF
+
+  min_ansible_version: 2.8
+
+dependencies: []

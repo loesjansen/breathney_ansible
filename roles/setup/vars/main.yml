@@ -1,0 +1,16 @@
+---
+basic_packages:
+  - aptitude
+  - cmake
+  - g++
+  - git
+  - inxi
+  - locate
+  - nload
+  - python3-dev
+    #  - ripgrep  # not available on Debian 9
+  - rsync
+  - screen
+  - telnet
+  - tree
+  - vim-nox

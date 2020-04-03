@@ -1,0 +1,191 @@
+---
+- name: Generate the locale
+  become: yes
+  locale_gen:
+    name: en_GB.UTF-8
+    state: present
+
+- name: Set the locale
+  become: yes
+  command:
+    argv:
+      - localectl
+      - set-locale
+      - LANG=en_GB.utf-8
+      - LANGUAGE=en_GB.utf-8
+      - LC_CTYPE=en_GB.utf-8
+      - LC_NUMERIC=en_GB.utf-8
+      - LC_TIME=en_GB.utf-8
+      - LC_COLLATE=en_GB.utf-8
+      - LC_MONETARY=en_GB.utf-8
+      - LC_MESSAGES=en_GB.utf-8
+      - LC_PAPER=en_GB.utf-8
+      - LC_NAME=en_GB.utf-8
+      - LC_ADDRESS=en_GB.utf-8
+      - LC_TELEPHONE=en_GB.utf-8
+      - LC_MEASUREMENT=en_GB.utf-8
+      - LC_IDENTIFICATION=en_GB.utf-8
+
+- name: Set the timezone
+  become: yes
+  timezone:
+    name: Europe/Brussels
+
+- name: Set the hostname
+  become: yes
+  hostname:
+    name: "{{ inventory_hostname }}"
+  tags:
+    - network
+
+- name: Make sure autoresolving works
+  become: yes
+  lineinfile:
+    group: root
+    owner: root
+    mode: 0644
+    path: /etc/hosts
+    line: "127.0.1.1   {{ inventory_hostname }}"
+  tags:
+    - network
+
+- name: Set static IP with NetworkManager
+  become: yes
+  nmcli:
+    conn_name: Wired connection 1
+    ifname: "{{ interface }}"
+    type: ethernet
+    ip4: "{{ ipaddress }}"
+    gw4: "{{ routers }}"
+    dns4: "{{ dns_servers.split() }}"
+    state: present
+    autoconnect: yes
+  when: networkmanager is defined and networkmanager
+  notify: reboot_setup
+  tags:
+    - network
+
+- name: Set static IP with dhcpcd
+  become: yes
+  lineinfile:
+    dest: /etc/dhcpcd.conf
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  loop:
+    - { regexp: "^interface", line: "interface {{ interface }}" }
+    - {
+        regexp: "^static ip_address",
+        line: "static ip_address={{ ipaddress }}",
+      }
+    - { regexp: "^static routers", line: "static routers={{ routers }}" }
+    - {
+        regexp: "^static domain_name_servers",
+        line: "static domain_name_servers={{ dns_servers }}",
+      }
+  when: raspberry_pi is defined and raspberry_pi
+  notify: reboot_setup
+  tags:
+    - network
+
+- name: Set static IP with /etc/network
+  become: yes
+  when: etcnetwork is defined and etcnetwork
+  block:
+    - name: Install resolvonf [/etc/network]
+      apt:
+        pkg: resolvconf
+    - name: Set static IP with /etc/network (1/2)
+      lineinfile:
+        group: root
+        mode: 0644
+        owner: root
+        path: /etc/network/interfaces
+        regexp: "^iface {{ interface }} inet"
+        line: "iface {{ interface }} inet static"
+      notify: reboot_setup
+    - name: Set static IP with /etc/network (2/2)
+      blockinfile:
+        group: root
+        mode: 0644
+        owner: root
+        path: /etc/network/interfaces
+        insertafter: "^iface {{ interface }} inet"
+        block: |
+          address {{ ipaddress }}
+          broadcast {{ broadcast }}
+          netmask {{ netmask }}
+          gateway {{ routers }}
+          dns-nameservers {{ dns_servers }}
+      notify: reboot_setup
+    - name: Enable networking at boot
+      systemd:
+        enabled: yes
+        name: "{{ item }}"
+      loop:
+        - networking
+        - resolvconf
+      notify: reboot_setup
+  tags:
+    - network
+
+- name: Set static IP with netplan
+  become: yes
+  when: netplan is defined and netplan
+  template:
+    dest: /etc/netplan/01-netcfg.yaml
+    group: root
+    mode: 0644
+    owner: root
+    src: netplan-netcfg.j2
+  notify: reboot_setup
+  tags:
+    - network
+
+- name: Configure hosts-file
+  become: yes
+  lineinfile:
+    group: root
+    line: "{{ item.value }}  {{ item.key }}"
+    regexp: "{{ item.key }}$"
+    state: present
+    mode: 0644
+    owner: root
+    path: /etc/hosts
+  loop: "{{ hosts|default({})|dict2items }}"
+  when: item.key != inventory_hostname
+  tags:
+    - network
+
+- name: Configure HDMI
+  become: yes
+  lineinfile:
+    dest: /boot/config.txt
+    regexp: hdmi_safe
+    line: "hdmi_safe={{ 1 if hdmi_safe else 0 }}"
+    state: present
+  when: raspberry_pi is defined and raspberry_pi
+  notify: reboot_setup
+
+- name: Disable overscan
+  become: yes
+  lineinfile:
+    dest: /boot/config.txt
+    regexp: disable_overscan
+    line: disable_overscan=1
+    state: present
+  when: raspberry_pi is defined and raspberry_pi
+  notify: reboot_setup
+
+#- name: Configure daily reboot, for auto maintenance
+#  become: yes
+#  cron:
+#    day: "*"
+#    hour: "5"
+#    job: /sbin/shutdown -r 2
+#    minute: "27"
+#    month: "*"
+#    name: daily reboot for auto maintance
+#    user: root
+#    weekday: "*"
+#  when: daily_reboot is defined and daily_reboot

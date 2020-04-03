@@ -1,0 +1,5 @@
+---
+- name: reboot
+  become: yes
+  reboot:
+  listen: reboot_setup

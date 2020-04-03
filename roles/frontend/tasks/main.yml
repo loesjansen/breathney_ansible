@@ -1,0 +1,37 @@
+---
+- name: Install packages
+  become: yes
+  apt:
+    state: present
+    name: "{{ item }}"
+  loop:
+    - nodm
+    - unclutter
+    - x11-xserver-utils
+    - xserver-xorg-video-fbdev
+    - xserver-xorg-input-evdev
+
+- include: "{{ frontend }}.yml"
+
+- name: Configure startup routine
+  become: yes
+  block:
+    - name: Configure nodm
+      lineinfile:
+        dest: /etc/default/nodm
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        state: present
+      loop:
+        - { regexp: "^NODM_ENABLED=", line: "NODM_ENABLED=true" }
+        - { regexp: "^NODM_USER=", line: "NODM_USER={{ autostart_user }}" }
+
+    - name: Install .xsession
+      template:
+        src: xsession.j2
+        dest: "/home/{{ autostart_user }}/.xsession"
+        owner: "{{ autostart_user }}"
+        group: "{{ autostart_group }}"
+
+- include: vncserver.yml
+  when: vncserver

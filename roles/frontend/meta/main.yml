@@ -1,0 +1,6 @@
+galaxy_info:
+  author: Bart Van Loon
+  description: configures the pi to act as a frontend screen (timer and hints)
+  company: Scapegoat VOF
+
+dependencies: []

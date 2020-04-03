@@ -1,0 +1,71 @@
+---
+- name: Disable password for user pi
+  become: yes
+  user:
+    name: pi
+    password: "!"
+  when: raspberry_pi is defined and raspberry_pi
+
+- name: Check if zshell is installed
+  become: yes
+  become_user: root
+  apt:
+    name: zsh
+    state: present
+  register: zshell_present
+
+- name: Setup group breathney
+  become: yes
+  group:
+    name: breathney
+
+- name: Setup group breathneyfrontend
+  become: yes
+  group:
+    name: breathneyfrontend
+
+- name: Setup user breathney
+  become: yes
+  user:
+    comment: Breathney admin
+    group: breathney
+    home: /home/breathney
+    name: breathney
+    password: $6$rounds=656000$DbGrqmjLw.r..n8j$Ms4cgMSfuuY95Skr/x0yyZJCidIphKP2pO8eLypo3dQaJo3BFYjuzl3AVspRrG3G3qSZ8MXHfpEd.HWqBg02R/    # ohnootae6oNg1
+
+- name: Setup user breathneyfrontend
+  become: yes
+  user:
+    comment: Breathney frontend user
+    group: breathneyfrontend
+    home: /home/breathneyfrontend
+    name: breathneyfrontend
+    password: $6$rounds=656000$DiMgl7plWydgJkzI$jwbTEKbrbuyFgJLVj8YwR659MJESXS6oUk/8pxRNgCR/Ecv8hu94hCUNfvpy8xyM/EINnUEcMAt/kuF/ap75r.    # bitauHoo6thei
+
+- name: Install public ssh key for loes
+  become: yes
+  authorized_key:
+    key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDC003mES+wFa9Xr+CR/+1i7GyNN+XDSAIZD8LhibRc+E96xkqM+yHfL0n66hEU64PGZ6Tml+1PhuwgU7pAP5AXtw/e79vGQ7KiJOJ6vy8O7qEw38fGYc5hRtvCzehuxO/YG3+fRpzwQWAUqcVR1KiV3Y1on0x+K47hWde5B5d0RfgqXWe6N40L8vcU/2HE7t9oDavyPWKzMJiuOjX/ohSB/Jnhi/ARCPVTnZn9CWht0EexAcw6siasafG+8hkXXMdioXBkkHLUy1J4cxyoa9oDyc7SoCqMlnMXlbESey5hTVqEg82G3O11iBfxOo/Vq18zVsxuNWtEeTkRI1P8Bv5H loes@Loess-MacBook.local"
+    user: breathney
+
+- name: Enable passwordless sudo for breathney
+  become: yes
+  copy:
+    content: "breathney ALL=(ALL) NOPASSWD: ALL"
+    dest: /etc/sudoers.d/020_loes-nopasswd
+    mode: 0440
+    owner: root
+    group: root
+    validate: /usr/sbin/visudo -cf %s
+
+- name: Configure user
+  #when: zshell_present is succeeded
+  #when: bash_present is succeeded
+  include: user.yml
+  loop:
+    - breathney
+    - breathneyfrontend
+    #- pi
+    - root
+  loop_control:
+    loop_var: username

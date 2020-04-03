@@ -1,0 +1,25 @@
+---
+- name: Set audio channel
+  set_fact:
+    aout: "{{ 1 if (audio_channel == 'analogue') else 2 }}"
+  when: raspberry_pi is defined and raspberry_pi
+
+- name: Force audio out channel
+  become: yes
+  lineinfile:
+    insertbefore: exit 0
+    regexp: "^amixer cset numid"
+    line: "amixer cset numid=3 {{ aout }}  # ansible managed"
+    path: /etc/rc.local
+  notify: reboot_setup
+  when: raspberry_pi is defined and raspberry_pi
+
+- name: Set reasonable audio volume at boot
+  become: yes
+  lineinfile:
+    insertbefore: exit 0
+    regexp: "^amixer set PCM"
+    line: "amixer set PCM -- {{ startvolume|default('90%') }}  # ansible managed"
+    path: /etc/rc.local
+  notify: reboot_setup
+  when: raspberry_pi is defined and raspberry_pi

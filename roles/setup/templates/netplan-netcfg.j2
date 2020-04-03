@@ -1,0 +1,10 @@
+# {{ ansible_managed }}
+network:
+  ethernets:
+    {{ interface }}:
+      dhcp4: no
+      dhcp6: no
+      addresses: [ {{ ipaddress }}/24, ]
+      gateway4:  {{ routers }}
+      nameservers:
+        addresses: [{{ dns_servers|replace(' ', ', ') }}]
