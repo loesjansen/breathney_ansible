@@ -7,8 +7,8 @@ pipenv_path: /usr/local/bin/pipenv
 daily_reboot: no
 
 netplan: yes
-interface: eno1
-ipaddress: 192.168.0.184
+#interface: enp0s25
+#ipaddress: 192.168.0.220
 routers: 192.168.0.1
 dns_servers: 192.168.0.1 8.8.8.8
 

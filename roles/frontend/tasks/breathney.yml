@@ -32,13 +32,15 @@
 
 - name: Set Chromium command
   set_fact:
-    appcommand: "chromium-browser {{ frontend_url }} --window-size=${SCREEN_WIDTH},${SCREEN_HEIGHT} --start-fullscreen --kiosk --incognito --noerrdialogs --disable-translate --no-first-run --fast --fast-start --disable-infobars --disk-cache-dir=/dev/null --autoplay-policy=no-user-gesture-required --no-user-gesture-required --disable-features=PreloadMediaEngagementData,AutoplayIgnoreWebAudio,MediaEngagementBypassAutoplayPolicies,TranslateUI"
+    appcommand: "chromium-browser {{ frontend_url }} --window-size=${SCREEN_WIDTH},${SCREEN_HEIGHT} --start-fullscreen --incognito --noerrdialogs --disable-translate --no-first-run --fast --fast-start --disable-infobars --disk-cache-dir=/dev/null --autoplay-policy=no-user-gesture-required --no-user-gesture-required --disable-features=PreloadMediaEngagementData,AutoplayIgnoreWebAudio,MediaEngagementBypassAutoplayPolicies,TranslateUI"
+    #appcommand: "chromium-browser {{ frontend_url }} --window-size=${SCREEN_WIDTH},${SCREEN_HEIGHT} --start-fullscreen --kiosk --incognito --noerrdialogs --disable-translate --no-first-run --fast --fast-start --disable-infobars --disk-cache-dir=/dev/null --autoplay-policy=no-user-gesture-required --no-user-gesture-required --disable-features=PreloadMediaEngagementData,AutoplayIgnoreWebAudio,MediaEngagementBypassAutoplayPolicies,TranslateUI"
 
 - name: Install Arduino make
   become: yes
   apt:
     name: arduino-mk
     state: present
+    # TODO: user toevoegen aan groep dialout?
 
 - name: Download and install Docker
   become: yes
@@ -55,7 +57,7 @@
       when: ubuntu is defined and ubuntu
     - name: Add an Apt signing key for Docker, will not download if present (Raspbian)
       apt_key:
-        id: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88  # TODO: aanpassen?
+        id: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88 
         url: https://download.docker.com/linux/raspbian/gpg
         state: present
     - name: Add Docker repository for Raspbian
@@ -75,6 +77,7 @@
         - docker-ce
         - docker-ce-cli
         - containerd.io
+        - docker-compose
 
 - name: Install Python3
   become: yes
@@ -85,13 +88,10 @@
     - python3
     - python3-pip
     - python-setuptools
-
-- name: Install Pymongo
-  pip:
-    name: pymongo
-    executable: pip3
+    - python-docker
 
 - name: Install Python library dependencies
+  become: yes
   pip:
     name: "{{ item }}"
     executable: pip3
@@ -99,6 +99,10 @@
     - pymongo
     - pyserial
     - websockets
+    - websocket
+    - playsound
+    - docker
+    - docker-compose
 
 - name: Download beademingstoestel from git
   become: yes
@@ -106,8 +110,8 @@
   block:
     - name: Create beademingstoestel directories
       file:
-        group: breathneyfrontend
-        owner: breathneyfrontend
+        group: breathney
+        owner: breathney
         #mode: 0700
         mode: 0777
         #path: /home/pi/beademingstoestel
@@ -115,29 +119,35 @@
         state: directory
       loop:
         - /usr/share/ventilator
-        - /home/breathneyfrontend/beademingstoestel/OpenSource_ventilator_lungs
-        - /home/breathneyfrontend/beademingstoestel/frontend_installer
+        - /home/breathney/beademingstoestel/csharp_daemon
+        - /home/breathney/beademingstoestel/OpenSource_ventilator_lungs
+        - /home/breathney/beademingstoestel/frontend_installer
     - name: Checkout repository python_daemon
       git:
         repo: 'https://github.com/beademingstoestel/python_daemon.git'
         dest: /usr/share/ventilator 
         #version: release-0.22
+    - name: Checkout repository csharp_daemon
+      git:
+        repo: 'https://github.com/beademingstoestel/csharp_daemon/tree/master/VentilatorDaemon/publish_linux'
+        dest: /home/breathney/beademingstoestel/csharp_daemon
+        #version: release-0.22
     - name: Checkout repository OpenSource_ventilator_lungs
       git:
         repo: 'https://github.com/beademingstoestel/OpenSource_ventilator_lungs.git'
-        dest: /home/breathneyfrontend/beademingstoestel/OpenSource_ventilator_lungs
+        dest: /home/breathney/beademingstoestel/OpenSource_ventilator_lungs
         #version: release-0.22
     - name: Checkout repository frontend_installer
       git:
         repo: 'https://github.com/beademingstoestel/frontend_installer.git'
-        dest: /home/breathneyfrontend/beademingstoestel/frontend_installer
+        dest: /home/breathney/beademingstoestel/frontend_installer
         #version: release-0.22
  
 - name: Set udev rules for Arduino
   become: yes
   block:
   - name: Copy rules to /etc/udev/rules.d
-    copy: remote_src=True src=/home/breathneyfrontend/beademingstoestel/frontend_installer/99-arduino.rules dest=/etc/udev/rules.d/99-arduino.rules
+    copy: remote_src=True src=/home/breathney/beademingstoestel/frontend_installer/99-arduino.rules dest=/etc/udev/rules.d/99-arduino.rules
     notify: reboot_frontend
   - name: Set permissions on arduino rules file
     file:
@@ -163,3 +173,10 @@
       name: ventilator_daemon
       state: reloaded
       enabled: yes
+
+- name: Run `docker-compose up`
+  become: yes
+  docker_compose:
+    project_src: /home/breathney/beademingstoestel/frontend_installer
+    #build: no
+    state: present

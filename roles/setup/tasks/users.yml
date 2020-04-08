@@ -24,24 +24,6 @@
   group:
     name: breathneyfrontend
 
-- name: Setup user breathney
-  become: yes
-  user:
-    comment: Breathney admin
-    group: breathney
-    home: /home/breathney
-    name: breathney
-    password: $6$rounds=656000$DbGrqmjLw.r..n8j$Ms4cgMSfuuY95Skr/x0yyZJCidIphKP2pO8eLypo3dQaJo3BFYjuzl3AVspRrG3G3qSZ8MXHfpEd.HWqBg02R/    # ohnootae6oNg1
-
-- name: Setup user breathneyfrontend
-  become: yes
-  user:
-    comment: Breathney frontend user
-    group: breathneyfrontend
-    home: /home/breathneyfrontend
-    name: breathneyfrontend
-    password: $6$rounds=656000$DiMgl7plWydgJkzI$jwbTEKbrbuyFgJLVj8YwR659MJESXS6oUk/8pxRNgCR/Ecv8hu94hCUNfvpy8xyM/EINnUEcMAt/kuF/ap75r.    # bitauHoo6thei
-
 - name: Install public ssh key for loes
   become: yes
   authorized_key:
@@ -52,11 +34,30 @@
   become: yes
   copy:
     content: "breathney ALL=(ALL) NOPASSWD: ALL"
-    dest: /etc/sudoers.d/020_loes-nopasswd
+    dest: /etc/sudoers.d/020_breathney-nopasswd
     mode: 0440
     owner: root
     group: root
     validate: /usr/sbin/visudo -cf %s
+
+- name: Setup user breathney
+  become: yes
+  user:
+    comment: Breathney admin
+    #group: breathney
+    #home: /home/breathney
+    name: breathney
+    #password: $6$rounds=656000$DbGrqmjLw.r..n8j$Ms4cgMSfuuY95Skr/x0yyZJCidIphKP2pO8eLypo3dQaJo3BFYjuzl3AVspRrG3G3qSZ8MXHfpEd.HWqBg02R/    # ohnootae6oNg1
+    password: $6$rounds=656000$HBw9d0UwUNSmOO6g$AKe/ucGZpER9.2KLBxGnsUcjbvUjfTvIBuKUUXs6GqvUQ6iPtesiN/tK37GaY8et69ox/YwK31j2dk5w4tD580    # breathney
+
+- name: Setup user breathneyfrontend
+  become: yes
+  user:
+    comment: Breathney frontend user
+    group: breathneyfrontend
+    home: /home/breathneyfrontend
+    name: breathneyfrontend
+    password: $6$rounds=656000$DiMgl7plWydgJkzI$jwbTEKbrbuyFgJLVj8YwR659MJESXS6oUk/8pxRNgCR/Ecv8hu94hCUNfvpy8xyM/EINnUEcMAt/kuF/ap75r.    # bitauHoo6thei
 
 - name: Configure user
   #when: zshell_present is succeeded
