@@ -6,7 +6,10 @@
     name: "{{ item }}"
   loop:
     - libnss3
+    #- chromium-browser=65.0.3325.181-0+rpt4
     - chromium-browser
+    #- chromium-browser-l10n=65.0.3325.181-0+rpt4
+    #- chromium-codecs-ffmpeg-extra=65.0.3325.181-0+rpt4
  
 - name: Set Chromium policies to allow autoplay
   become: yes
@@ -29,7 +32,8 @@
 
 - name: Set Chromium command
   set_fact:
-    appcommand: "chromium-browser {{ frontend_url }} --window-size=${SCREEN_WIDTH},${SCREEN_HEIGHT} --start-fullscreen --kiosk --incognito --noerrdialogs --disable-translate --no-first-run --fast --fast-start --disable-infobars --disk-cache-dir=/dev/null --autoplay-policy=no-user-gesture-required --no-user-gesture-required --disable-features=PreloadMediaEngagementData,AutoplayIgnoreWebAudio,MediaEngagementBypassAutoplayPolicies,TranslateUI"
+    appcommand: "chromium-browser {{ frontend_url }} --window-size=${SCREEN_WIDTH},${SCREEN_HEIGHT} --start-fullscreen --incognito --noerrdialogs --disable-translate --no-first-run --fast --fast-start --disable-infobars --disk-cache-dir=/dev/null --autoplay-policy=no-user-gesture-required --no-user-gesture-required --disable-features=PreloadMediaEngagementData,AutoplayIgnoreWebAudio,MediaEngagementBypassAutoplayPolicies,TranslateUI"
+    #appcommand: "chromium-browser {{ frontend_url }} --window-size=${SCREEN_WIDTH},${SCREEN_HEIGHT} --start-fullscreen --kiosk --incognito --noerrdialogs --disable-translate --no-first-run --fast --fast-start --disable-infobars --disk-cache-dir=/dev/null --autoplay-policy=no-user-gesture-required --no-user-gesture-required --disable-features=PreloadMediaEngagementData,AutoplayIgnoreWebAudio,MediaEngagementBypassAutoplayPolicies,TranslateUI"
 
 - name: Install Arduino make
   become: yes
@@ -75,6 +79,31 @@
         - containerd.io
         - docker-compose
 
+- name: Install Python3
+  become: yes
+  apt:
+    state: present
+    name: "{{ item }}"
+  loop:
+    - python3
+    - python3-pip
+    - python-setuptools
+    - python-docker
+
+- name: Install Python library dependencies
+  become: yes
+  pip:
+    name: "{{ item }}"
+    executable: pip3
+  loop:
+    - pymongo
+    - pyserial
+    - websockets
+    - websocket
+    - playsound
+    - docker
+    - docker-compose
+
 - name: Download beademingstoestel from git
   become: yes
   #become_user: breathneyfrontend
@@ -90,7 +119,19 @@
         state: directory
       loop:
         #- /usr/share/ventilator
+        - /opt/ventilator
+        - /home/breathney/beademingstoestel/OpenSource_ventilator_lungs
         - /home/breathney/beademingstoestel/frontend_installer
+    - name: Checkout repository csharp_daemon
+      git:
+        repo: 'https://github.com/beademingstoestel/csharp_daemon.git'
+        dest: /opt/ventilator
+        #version: release-0.22
+    - name: Checkout repository OpenSource_ventilator_lungs
+      git:
+        repo: 'https://github.com/beademingstoestel/OpenSource_ventilator_lungs.git'
+        dest: /home/breathney/beademingstoestel/OpenSource_ventilator_lungs
+        #version: release-0.22
     - name: Checkout repository frontend_installer
       git:
         repo: 'https://github.com/beademingstoestel/frontend_installer.git'
@@ -109,6 +150,31 @@
       owner: root
       group: root
       mode: '0644'
+
+- name: Add csharp_daemon to services
+  become: yes
+  block:
+  - name: Copy ventilator_daemon.service to /etc/systemd/system
+    copy: src=ventilator_daemon.service dest=/etc/systemd/system/ventilator_daemon.service
+    #copy: remote_src=True src=/usr/share/ventilator/ventilator_daemon.service dest=/etc/systemd/system/ventilator_daemon.service
+    notify: reboot_frontend
+  - name: Set permissions on ventilator_daemon.service
+    file:
+      path: /etc/systemd/system/ventilator_daemon.service
+      owner: root
+      group: root
+      mode: '0600'
+  - name: Reload service ventilator_daemon and enable
+    service:
+      name: ventilator_daemon
+      state: reloaded
+      enabled: yes
+  - name: Set permissions on VentilatorDaemon executable
+    file:
+      path: /opt/ventilator/VentilatorDaemon/publish_linux/VentilatorDaemon
+      owner: root
+      group: root
+      mode: '0700'
 
 - name: Run `docker-compose up`
   become: yes

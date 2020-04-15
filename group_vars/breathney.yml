@@ -9,8 +9,11 @@ daily_reboot: no
 netplan: yes
 #interface: enp0s25
 #ipaddress: 192.168.0.220
-routers: 192.168.0.1
-dns_servers: 192.168.0.1 8.8.8.8
+#interface: wlan0
+#ipaddress: 192.168.0.166
+routers: 10.240.231.255
+#dns_servers: 192.168.0.1 8.8.8.8
+dns_servers: 8.8.8.8
 
 audio_channel: hdmi #analogue
 hdmi_safe: no
@@ -18,4 +21,5 @@ autostart_user: breathneyfrontend
 autostart_group: breathneyfrontend
 
 frontend: breathney
-frontend_url: localhost:3001
+frontend_url: http://localhost:3001
+#frontend_url: https://youtu.be/kYtGl1dX5ql

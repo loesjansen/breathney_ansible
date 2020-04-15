@@ -21,14 +21,14 @@
     update_cache: yes
   when: raspberry_pi is defined and raspberry_pi
 
-#- name: Upgrade all packages
-#  become: yes
-#  apt:
-#    autoclean: yes
-#    autoremove: yes
-#    cache_valid_time: 3600
-#    update_cache: yes
-#    upgrade: full
+- name: Upgrade all packages
+  become: yes
+  apt:
+    autoclean: yes
+    autoremove: yes
+    cache_valid_time: 100
+    update_cache: yes
+    upgrade: full
 
 - name: Install some basic packages
   become: yes

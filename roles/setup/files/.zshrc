@@ -22,7 +22,7 @@ setopt hist_ignore_space
 
 bindkey -v # vi keybindings instead of emacs keybindings
 
-zstyle :compinstall filename '/home/bbbart/.zshrc'
+zstyle :compinstall filename '/home/loes/.zshrc'
 
 ## case-insensitive (all),partial-word and then substring completion
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
