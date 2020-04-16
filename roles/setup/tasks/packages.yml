@@ -26,7 +26,7 @@
   apt:
     autoclean: yes
     autoremove: yes
-    cache_valid_time: 100
+    cache_valid_time: 3600
     update_cache: yes
     upgrade: full
 
