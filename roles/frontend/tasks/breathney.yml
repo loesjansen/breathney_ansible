@@ -110,9 +110,23 @@
       group: root
       mode: '0644'
 
+- name: Create symbolic link to ventilator
+  become: yes
+  file:
+    src: "/dev/null"
+    dest: "/dev/ventilator"
+    state: link
+
 - name: Run `docker-compose up`
   become: yes
   docker_compose:
     project_src: /home/breathney/beademingstoestel/frontend_installer
     #build: no
     state: present
+
+- name: Remove link on /dev/ventilator
+  become: yes
+  file:
+    path: /dev/ventilator
+    state: absent
+

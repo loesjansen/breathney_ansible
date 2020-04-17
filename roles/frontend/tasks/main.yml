@@ -1,11 +1,25 @@
 ---
+- name: Install nodm and set as default
+  become: yes
+  block:
+    - name: Set nodm as default dm
+      lineinfile:
+        dest: /etc/X11/default-display-manager
+        regexp: "gdm"
+        line: "/usr/sbin/nodm"
+        state: present
+    - name: Install nodm
+      apt:
+        state: present
+        name: nodm
+
 - name: Install packages
   become: yes
   apt:
     state: present
     name: "{{ item }}"
   loop:
-    - nodm
+    #- nodm
     - unclutter
     - x11-xserver-utils
     - xserver-xorg-video-fbdev
@@ -16,12 +30,6 @@
 - name: Configure startup routine
   become: yes
   block:
-    - name: Set nodm as default dm
-      lineinfile:
-        dest: /etc/X11/default-display-manager
-        regexp: '^gdm'
-        line: /usr/sbin/nodm
-        state: present
     - name: Configure nodm
       lineinfile:
         dest: /etc/default/nodm
