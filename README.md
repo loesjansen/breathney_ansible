@@ -49,7 +49,7 @@ Edit files
 - Add hosts (breathney01, breathney02, …) to **breathney\_ansible/hosts**, list them under **[breathney]**
 - Add a yml-file for every host, set the correct ip-address in each file
 - Run ansible-playbook:
-   ```ansible-playbook breathney\_ansible/breathney.yml -u breathney -k -K  ```
+   ```ansible-playbook breathney_ansible/breathney.yml -u breathney -k -K  ```
    Use arguments:  
         -u: remote user (in this case: breathney)  
         -k: ask password for connecting (if unchanged: breathney)  
